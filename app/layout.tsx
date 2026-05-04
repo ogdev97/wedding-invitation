@@ -25,13 +25,27 @@ const interSans = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Norman & Joo Yi | Wedding Invitation",
-  description:
-    "You are cordially invited to celebrate the wedding of Ang Norman & Ong Joo Yi on 15th May 2027 at VTEC Batu Kawan.",
+  metadataBase: new URL("https://wedding-invitation-ten-dusky.vercel.app"),
+  title: "Norman & Jooyi Digital RSVP",
+  description: "AJ❤️ Forever 15/5/2027",
   openGraph: {
-    title: "Norman & Joo Yi | Wedding Invitation",
-    description: "Join us on 15th May 2027 at VTEC Batu Kawan.",
+    title: "Norman & Jooyi Digital RSVP",
+    description: "AJ❤️ Forever 15/5/2027",
     type: "website",
+    images: [
+      {
+        url: "/images/hero-bg.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Norman & Jooyi Wedding",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Norman & Jooyi Digital RSVP",
+    description: "AJ❤️ Forever 15/5/2027",
+    images: ["/images/hero-bg.jpg"],
   },
 };
 
