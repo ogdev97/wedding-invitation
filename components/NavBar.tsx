@@ -36,21 +36,22 @@ export default function NavBar() {
       )}
     >
       <div
-        className="mx-4 mt-3 rounded-full px-6 py-3 flex items-center justify-between gap-6"
+        className="mx-3 mt-3 rounded-full px-3 py-2.5 flex items-center justify-between gap-2"
         style={{
           background:     "rgba(45,10,24,0.88)",
           backdropFilter: "blur(14px)",
           border:         "1px solid rgba(192,72,120,0.25)",
         }}
       >
+        {/* Logo — hidden on mobile to give links full room */}
         <span
-          className="font-playfair italic text-sm whitespace-nowrap"
+          className="hidden sm:block font-playfair italic text-sm whitespace-nowrap flex-shrink-0"
           style={{ color: "#f5c4d8" }}
         >
           AJ❤️
         </span>
 
-        <ul className="flex items-center gap-1">
+        <ul className="flex items-center justify-around sm:justify-start sm:gap-1 w-full sm:w-auto">
           {NAV_LINKS.map((link) => {
             const id       = link.href.replace("#", "");
             const isActive = active === id;
@@ -59,7 +60,7 @@ export default function NavBar() {
                 <a
                   href={link.href}
                   className={clsx(
-                    "px-3 py-1 rounded-full text-[11px] tracking-wider uppercase font-inter transition-all duration-300",
+                    "block px-2.5 py-1 rounded-full text-[10px] tracking-wider uppercase font-inter transition-all duration-300 whitespace-nowrap",
                     isActive ? "" : "text-white/50 hover:text-white/80"
                   )}
                   style={
