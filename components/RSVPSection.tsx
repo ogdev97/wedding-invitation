@@ -1,17 +1,30 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Snowfall from "./Snowfall";
 
-type Status = "idle" | "loading" | "success" | "error";
+type Status = "idle" | "loading" | "success" | "error" | "duplicate";
 
 interface FormData {
-  name: string; email: string;
-  attendance: "yes" | "no" | "maybe" | "";
-  guests: string; dietary: string; message: string;
+  name: string;
+  phone: string;
+  side: "bride" | "groom" | "";
+  dietary: string;
+  adults: string;
+  babies: string;
+  message: string;
 }
 
-const INITIAL: FormData = { name: "", email: "", attendance: "", guests: "1", dietary: "", message: "" };
+const INITIAL: FormData = {
+  name: "",
+  phone: "",
+  side: "",
+  dietary: "",
+  adults: "1",
+  babies: "0",
+  message: "",
+};
 
 function InputWrapper({ children }: { children: React.ReactNode }) {
   return (
@@ -22,10 +35,12 @@ function InputWrapper({ children }: { children: React.ReactNode }) {
 }
 
 export default function RSVPSection() {
-  const ref    = useRef<HTMLDivElement>(null);
-  const [form, setForm]     = useState<FormData>(INITIAL);
+  const ref = useRef<HTMLDivElement>(null);
+  const [form, setForm] = useState<FormData>(INITIAL);
   const [status, setStatus] = useState<Status>("idle");
-  const [error, setError]   = useState("");
+  const [error, setError] = useState("");
+  const [submittedName, setSubmittedName] = useState("");
+  const [submittedSide, setSubmittedSide] = useState<"bride" | "groom" | "">("");
 
   useEffect(() => {
     const el = ref.current;
@@ -44,33 +59,61 @@ export default function RSVPSection() {
     return () => observer.disconnect();
   }, []);
 
-  function set(key: keyof FormData, value: string) {
+  function set<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name || !form.email || !form.attendance) { setError("Please fill in all required fields."); return; }
-    setError(""); setStatus("loading");
+    if (!form.name || !form.phone || !form.side) {
+      setError("Please fill in name, phone, and select Bride's or Groom's side.");
+      return;
+    }
+    setError("");
+    setStatus("loading");
     try {
       const res = await fetch("/api/rsvp", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+      if (res.status === 409) {
+        setStatus("duplicate");
+        return;
+      }
       if (!res.ok) throw new Error();
-      setStatus("success"); setForm(INITIAL);
-    } catch { setStatus("error"); }
+      setSubmittedName(form.name.trim());
+      setSubmittedSide(form.side);
+      setStatus("success");
+      setForm(INITIAL);
+    } catch {
+      setStatus("error");
+    }
   }
 
+  const firstName = useMemo(
+    () => (submittedName ? submittedName.split(/\s+/)[0] : ""),
+    [submittedName]
+  );
+
   const inputStyle: React.CSSProperties = {
-    background: "transparent", outline: "none", color: "white",
+    background: "transparent",
+    outline: "none",
+    color: "white",
     fontFamily: "var(--font-inter-sans), Inter, system-ui, sans-serif",
-    fontSize: "0.875rem", width: "100%", padding: "12px 0", letterSpacing: "0.02em",
+    fontSize: "0.875rem",
+    width: "100%",
+    padding: "12px 0",
+    letterSpacing: "0.02em",
   };
   const labelStyle: React.CSSProperties = {
-    color: "rgba(255,255,255,0.35)", fontSize: "0.65rem", letterSpacing: "0.25em",
-    textTransform: "uppercase", fontFamily: "var(--font-inter-sans), Inter, system-ui, sans-serif",
-    display: "block", marginBottom: "2px",
+    color: "rgba(255,255,255,0.35)",
+    fontSize: "0.65rem",
+    letterSpacing: "0.25em",
+    textTransform: "uppercase",
+    fontFamily: "var(--font-inter-sans), Inter, system-ui, sans-serif",
+    display: "block",
+    marginBottom: "2px",
   };
 
   return (
@@ -84,7 +127,7 @@ export default function RSVPSection() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url('/images/hero-bg.jpg')`, backgroundColor: "#1A0510" }}
       />
-      {/* Deep rose overlay — darker so form stays readable */}
+      {/* Deep rose overlay */}
       <div
         className="absolute inset-0"
         style={{
@@ -93,7 +136,6 @@ export default function RSVPSection() {
         }}
       />
 
-      {/* Snow */}
       <Snowfall count={38} />
 
       <div className="relative z-10 w-full max-w-md mx-auto px-8 py-20">
@@ -110,97 +152,406 @@ export default function RSVPSection() {
           </p>
         </div>
 
-        {status === "success" ? (
-          <div className="reveal-section text-center py-12 px-6"
-            style={{ border: "1px solid rgba(224,144,176,0.25)", background: "rgba(192,72,120,0.10)" }}>
+        {status === "duplicate" ? (
+          <motion.div
+            className="relative text-center py-12 px-6"
+            style={{
+              border: "1px solid rgba(224,144,176,0.30)",
+              background: "rgba(45,10,24,0.55)",
+              backdropFilter: "blur(10px)",
+            }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
             <div className="flex justify-center mb-4">
-              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#e090b0" strokeWidth="1.5">
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
+              <span style={{ fontSize: "2.4rem" }}>💌</span>
             </div>
-            <h3 className="font-playfair italic text-2xl mb-2" style={{ color: "#f5c4d8" }}>Thank You!</h3>
-            <p className="font-cormorant italic" style={{ fontSize: "1.05rem", color: "rgba(255,255,255,0.55)" }}>
-              We&rsquo;ve received your RSVP and can&rsquo;t wait to see you on our special day.
+            <h3 className="font-playfair italic mb-3" style={{ color: "#f5c4d8", fontSize: "1.6rem" }}>
+              You&rsquo;ve already RSVP&rsquo;d
+            </h3>
+            <p
+              className="font-cormorant italic mx-auto"
+              style={{
+                fontSize: "1.02rem",
+                color: "rgba(255,255,255,0.65)",
+                maxWidth: "22rem",
+                lineHeight: 1.55,
+              }}
+            >
+              We&rsquo;ve already received a response from this device. If you need to
+              update or correct your details, please reach out to the groom directly.
             </p>
-            <button className="mt-6 text-[10px] tracking-[0.25em] uppercase font-inter"
-              style={{ color: "rgba(224,144,176,0.6)" }} onClick={() => setStatus("idle")}>
-              Submit another response
-            </button>
-          </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+              <a
+                href="https://wa.me/60134888747?text=Hi%20Norman%2C%20I%20need%20to%20update%20my%20RSVP"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-6 py-3 font-inter text-[11px] tracking-[0.25em] uppercase transition-all duration-200"
+                style={{ background: "#c04878", color: "#fff" }}
+              >
+                WhatsApp +60 13-488 8747
+              </a>
+              <a
+                href="mailto:norman1997.an@gmail.com?subject=RSVP%20correction"
+                className="inline-block px-6 py-3 font-inter text-[11px] tracking-[0.25em] uppercase transition-all duration-200"
+                style={{ border: "1px solid #c04878", color: "#f5c4d8" }}
+              >
+                Email Groom
+              </a>
+            </div>
+          </motion.div>
+        ) : status === "success" ? (
+          <motion.div
+            className="relative overflow-hidden text-center py-12 px-6"
+            style={{
+              border: "1px solid rgba(224,144,176,0.30)",
+              background:
+                "linear-gradient(160deg, rgba(192,72,120,0.18) 0%, rgba(125,37,72,0.10) 100%)",
+              backdropFilter: "blur(10px)",
+            }}
+            initial={{ opacity: 0, y: 20, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {/* Floating hearts rising */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+              {Array.from({ length: 12 }).map((_, i) => {
+                const left = (i * 13 + 7) % 95;
+                const delay = (i * 0.25) % 3;
+                const size = 12 + (i % 4) * 4;
+                const duration = 5 + (i % 3);
+                return (
+                  <motion.span
+                    key={i}
+                    className="absolute"
+                    style={{ left: `${left}%`, bottom: -20, fontSize: size }}
+                    initial={{ y: 0, opacity: 0 }}
+                    animate={{ y: -360, opacity: [0, 1, 1, 0] }}
+                    transition={{
+                      duration,
+                      delay,
+                      repeat: Infinity,
+                      ease: "easeOut",
+                    }}
+                  >
+                    {i % 3 === 0 ? "🌸" : i % 3 === 1 ? "💗" : "✨"}
+                  </motion.span>
+                );
+              })}
+            </div>
+
+            {/* Animated couple emoji */}
+            <motion.div
+              className="relative flex justify-center items-center gap-1 mb-5"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.15, type: "spring", stiffness: 200, damping: 14 }}
+            >
+              <motion.span
+                style={{ fontSize: "2.4rem", display: "inline-block" }}
+                animate={{ rotate: [-6, 6, -6] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+              >
+                👰🏻‍♀️
+              </motion.span>
+              <motion.span
+                style={{ fontSize: "1.6rem", display: "inline-block", color: "#e090b0" }}
+                animate={{ scale: [1, 1.25, 1] }}
+                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+              >
+                💖
+              </motion.span>
+              <motion.span
+                style={{ fontSize: "2.4rem", display: "inline-block" }}
+                animate={{ rotate: [6, -6, 6] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+              >
+                🤵🏻‍♂️
+              </motion.span>
+            </motion.div>
+
+            <motion.p
+              className="relative text-[10px] tracking-[0.4em] uppercase mb-3 font-inter"
+              style={{ color: "#e090b0" }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.55 }}
+            >
+              RSVP Received
+            </motion.p>
+
+            <motion.h3
+              className="relative font-playfair italic mb-3"
+              style={{ color: "#f5c4d8", fontSize: "1.9rem", lineHeight: 1.15 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.7 }}
+            >
+              {firstName ? <>Thank you, {firstName}!</> : <>Thank you!</>}
+            </motion.h3>
+
+            <motion.p
+              className="relative font-cormorant italic mx-auto"
+              style={{
+                fontSize: "1.05rem",
+                color: "rgba(255,255,255,0.65)",
+                maxWidth: "22rem",
+                lineHeight: 1.55,
+              }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.9 }}
+            >
+              Your response has been lovingly recorded.
+              {submittedSide === "bride" && " The bride’s family can’t wait to celebrate with you."}
+              {submittedSide === "groom" && " The groom’s family can’t wait to celebrate with you."}
+              {!submittedSide && " We can’t wait to celebrate with you."}
+            </motion.p>
+
+            <motion.div
+              className="relative flex items-center justify-center gap-3 my-6 mx-auto max-w-[200px]"
+              initial={{ opacity: 0, scaleX: 0.4 }}
+              animate={{ opacity: 1, scaleX: 1 }}
+              transition={{ duration: 0.8, delay: 1.05 }}
+            >
+              <div className="flex-1 h-px" style={{ background: "linear-gradient(to left, #e090b0, transparent)" }} />
+              <svg viewBox="0 0 16 16" width="8" height="8" fill="#e090b0">
+                <polygon points="8,0 16,8 8,16 0,8" />
+              </svg>
+              <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, #e090b0, transparent)" }} />
+            </motion.div>
+
+            <motion.p
+              className="relative font-cormorant italic"
+              style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.5)" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 1.2 }}
+            >
+              See you on <span style={{ color: "#f5c4d8", fontWeight: 500 }}>15 May 2027</span>
+            </motion.p>
+
+            <motion.p
+              className="relative mt-6 font-cormorant italic mx-auto"
+              style={{
+                fontSize: "0.85rem",
+                color: "rgba(255,255,255,0.4)",
+                maxWidth: "20rem",
+                lineHeight: 1.5,
+              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 1.4 }}
+            >
+              Need to update your details? Contact the groom at{" "}
+              <a
+                href="https://wa.me/60134888747"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "rgba(224,144,176,0.85)", textDecoration: "underline" }}
+              >
+                +60 13-488 8747
+              </a>{" "}
+              or{" "}
+              <a
+                href="mailto:norman1997.an@gmail.com?subject=RSVP%20correction"
+                style={{ color: "rgba(224,144,176,0.85)", textDecoration: "underline" }}
+              >
+                norman1997.an@gmail.com
+              </a>
+            </motion.p>
+          </motion.div>
         ) : (
           <form onSubmit={handleSubmit} className="reveal-section space-y-6"
             style={{ border: "1px solid rgba(224,144,176,0.18)", background: "rgba(45,10,24,0.60)", backdropFilter: "blur(10px)", padding: "2rem" }}>
 
             <InputWrapper>
               <label style={labelStyle}>Full Name *</label>
-              <input type="text" value={form.name} onChange={(e) => set("name", e.target.value)}
-                placeholder="Your full name" style={inputStyle} className="placeholder:text-white/20" required />
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => set("name", e.target.value)}
+                placeholder="Your full name"
+                style={inputStyle}
+                className="placeholder:text-white/20"
+                required
+              />
             </InputWrapper>
 
             <InputWrapper>
-              <label style={labelStyle}>Email *</label>
-              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)}
-                placeholder="your@email.com" style={inputStyle} className="placeholder:text-white/20" required />
+              <label style={labelStyle}>Phone Number *</label>
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(e) => set("phone", e.target.value)}
+                placeholder="e.g. +60 12-345 6789"
+                style={inputStyle}
+                className="placeholder:text-white/20"
+                required
+              />
             </InputWrapper>
 
             <div>
-              <label style={labelStyle}>Will you be attending? *</label>
-              <div className="flex gap-2 mt-3">
-                {(["yes", "no", "maybe"] as const).map((opt) => (
-                  <button key={opt} type="button" onClick={() => set("attendance", opt)}
-                    className="flex-1 py-2.5 text-[10px] tracking-[0.15em] uppercase font-inter transition-all duration-200"
-                    style={form.attendance === opt
-                      ? { background: "#c04878", color: "#fff", border: "1px solid #c04878" }
-                      : { border: "1px solid rgba(224,144,176,0.25)", color: "rgba(255,255,255,0.45)", background: "transparent" }}>
-                    {opt === "yes" ? "Accept" : opt === "no" ? "Decline" : "Maybe"}
-                  </button>
-                ))}
+              <label style={labelStyle}>Bride or Groom side? *</label>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                {([
+                  { id: "bride", emoji: "👰🏻‍♀️", label: "Bride's Side", accent: "#e090b0" },
+                  { id: "groom", emoji: "🤵🏻‍♂️", label: "Groom's Side", accent: "#9a6c4a" },
+                ] as const).map((opt) => {
+                  const selected = form.side === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => set("side", opt.id)}
+                      className="flex flex-col items-center gap-2 py-4 font-inter transition-all duration-200"
+                      style={
+                        selected
+                          ? {
+                              background: `linear-gradient(135deg, ${opt.accent}33 0%, rgba(192,72,120,0.15) 100%)`,
+                              border: `1px solid ${opt.accent}`,
+                              color: "#fff",
+                              boxShadow: `0 0 0 3px ${opt.accent}22`,
+                            }
+                          : {
+                              border: "1px solid rgba(224,144,176,0.20)",
+                              color: "rgba(255,255,255,0.55)",
+                              background: "transparent",
+                            }
+                      }
+                    >
+                      <span style={{ fontSize: "1.75rem", lineHeight: 1 }}>{opt.emoji}</span>
+                      <span className="text-[10px] tracking-[0.2em] uppercase">{opt.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {form.attendance === "yes" && (
-              <InputWrapper>
-                <label style={labelStyle}>Number of Guests</label>
-                <select value={form.guests} onChange={(e) => set("guests", e.target.value)}
-                  style={{ ...inputStyle, appearance: "none", cursor: "pointer" }} className="bg-transparent">
-                  {[1, 2, 3, 4].map((n) => (
-                    <option key={n} value={n} style={{ background: "#3D0F20" }}>{n} {n === 1 ? "guest" : "guests"}</option>
-                  ))}
-                </select>
-              </InputWrapper>
-            )}
+            <div>
+              <label style={labelStyle}>How many PAX</label>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <InputWrapper>
+                  <label
+                    className="font-inter"
+                    style={{
+                      color: "rgba(255,255,255,0.45)",
+                      fontSize: "0.7rem",
+                      display: "block",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Adults
+                  </label>
+                  <select
+                    value={form.adults}
+                    onChange={(e) => set("adults", e.target.value)}
+                    style={{ ...inputStyle, appearance: "none", cursor: "pointer" }}
+                  >
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n} style={{ background: "#3D0F20" }}>
+                        {n} {n === 1 ? "adult" : "adults"}
+                      </option>
+                    ))}
+                  </select>
+                </InputWrapper>
+
+                <InputWrapper>
+                  <label
+                    className="font-inter"
+                    style={{
+                      color: "rgba(255,255,255,0.45)",
+                      fontSize: "0.7rem",
+                      display: "block",
+                      marginBottom: "2px",
+                    }}
+                  >
+                    Babies (need baby chair)
+                  </label>
+                  <select
+                    value={form.babies}
+                    onChange={(e) => set("babies", e.target.value)}
+                    style={{ ...inputStyle, appearance: "none", cursor: "pointer" }}
+                  >
+                    {Array.from({ length: 6 }, (_, i) => i).map((n) => (
+                      <option key={n} value={n} style={{ background: "#3D0F20" }}>
+                        {n} {n === 1 ? "baby" : "babies"}
+                      </option>
+                    ))}
+                  </select>
+                </InputWrapper>
+              </div>
+            </div>
 
             <InputWrapper>
               <label style={labelStyle}>Dietary Requirements</label>
-              <input type="text" value={form.dietary} onChange={(e) => set("dietary", e.target.value)}
-                placeholder="Vegetarian, halal, allergies…" style={inputStyle} className="placeholder:text-white/20" />
+              <input
+                type="text"
+                value={form.dietary}
+                onChange={(e) => set("dietary", e.target.value)}
+                placeholder="Vegetarian, halal, allergies…"
+                style={inputStyle}
+                className="placeholder:text-white/20"
+              />
             </InputWrapper>
 
             <InputWrapper>
               <label style={labelStyle}>Message to the Couple</label>
-              <textarea value={form.message} onChange={(e) => set("message", e.target.value)}
-                placeholder="Share your wishes…" rows={3}
-                style={{ ...inputStyle, resize: "none", lineHeight: 1.6 }} className="placeholder:text-white/20" />
+              <textarea
+                value={form.message}
+                onChange={(e) => set("message", e.target.value)}
+                placeholder="Share your wishes…"
+                rows={3}
+                style={{ ...inputStyle, resize: "none", lineHeight: 1.6 }}
+                className="placeholder:text-white/20"
+              />
             </InputWrapper>
 
             {error && <p className="font-inter text-xs" style={{ color: "rgba(255,140,160,0.9)" }}>{error}</p>}
             {status === "error" && <p className="font-inter text-xs" style={{ color: "rgba(255,140,160,0.9)" }}>Something went wrong. Please try again.</p>}
 
-            <button type="submit" disabled={status === "loading"}
+            <button
+              type="submit"
+              disabled={status === "loading"}
               className="w-full py-4 font-inter text-[11px] tracking-[0.3em] uppercase transition-all duration-300 disabled:opacity-50"
-              style={{ background: status === "loading" ? "rgba(192,72,120,0.5)" : "#c04878", color: "#fff", fontWeight: 600 }}>
+              style={{ background: status === "loading" ? "rgba(192,72,120,0.5)" : "#c04878", color: "#fff", fontWeight: 600 }}
+            >
               {status === "loading" ? "Sending…" : "Send RSVP"}
             </button>
           </form>
         )}
 
         <div className="reveal-section mt-10 text-center">
-          <p className="font-cormorant italic" style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.3)" }}>
-            For enquiries, contact us at
+          <p
+            className="font-cormorant italic mx-auto"
+            style={{
+              fontSize: "0.95rem",
+              color: "rgba(255,255,255,0.4)",
+              maxWidth: "22rem",
+              lineHeight: 1.5,
+            }}
+          >
+            For any corrections, misinformation, or other queries, please contact the groom at
           </p>
-          <a href="mailto:norman1997.an@gmail.com" className="font-inter text-xs tracking-wider" style={{ color: "rgba(224,144,176,0.7)" }}>
-            norman1997.an@gmail.com
-          </a>
+          <div className="mt-2 flex flex-col gap-1 items-center">
+            <a
+              href="https://wa.me/60134888747"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-inter text-xs tracking-wider"
+              style={{ color: "rgba(224,144,176,0.85)" }}
+            >
+              +60 13-488 8747
+            </a>
+            <a
+              href="mailto:norman1997.an@gmail.com?subject=Wedding%20RSVP%20Query"
+              className="font-inter text-xs tracking-wider"
+              style={{ color: "rgba(224,144,176,0.85)" }}
+            >
+              norman1997.an@gmail.com
+            </a>
+          </div>
           <div className="mt-10">
             <p className="font-playfair italic text-lg" style={{ color: "rgba(255,255,255,0.22)" }}>Norman &amp; Joo Yi</p>
             <p className="font-inter text-[9px] tracking-[0.3em] uppercase mt-1" style={{ color: "rgba(255,255,255,0.15)" }}>15 · 05 · 2027</p>
