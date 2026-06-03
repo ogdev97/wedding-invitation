@@ -34,6 +34,13 @@ function getClientIp(req: Request): string {
   return "unknown";
 }
 
+function normalizePhone(raw: string): string {
+  // Strip everything except digits, then drop a leading 0 (Malaysian local form
+  // 012-... is equivalent to +6012-...). Keeps comparison forgiving.
+  const digits = (raw ?? "").replace(/\D+/g, "");
+  return digits.replace(/^0+/, "");
+}
+
 export async function POST(req: Request) {
   try {
     const body: RSVPPayload = await req.json();
@@ -57,18 +64,32 @@ export async function POST(req: Request) {
     const auth = getJwtClient();
     const sheets = google.sheets({ version: "v4", auth });
     const ip = getClientIp(req);
+    const normalizedPhone = normalizePhone(body.phone);
 
-    // Duplicate check — look up existing IPs in column I. Skip unknown IPs so
-    // local dev / proxy-stripped requests don't collide.
-    if (ip !== "unknown") {
-      const existing = await sheets.spreadsheets.values.get({
-        spreadsheetId,
-        range: `${SHEET_NAME}!I2:I`,
-      });
-      const ips = (existing.data.values ?? []).map((row) => (row[0] ?? "").trim());
-      if (ips.includes(ip)) {
-        return NextResponse.json({ error: "duplicate" }, { status: 409 });
-      }
+    // Duplicate check — phone first (most meaningful per-guest), then IP fallback.
+    // Pull both columns in one round-trip: C (phone) and I (IP).
+    const existing = await sheets.spreadsheets.values.batchGet({
+      spreadsheetId,
+      ranges: [`${SHEET_NAME}!C2:C`, `${SHEET_NAME}!I2:I`],
+    });
+    const phones = (existing.data.valueRanges?.[0]?.values ?? []).map((row) =>
+      normalizePhone(row[0] ?? "")
+    );
+    const ips = (existing.data.valueRanges?.[1]?.values ?? []).map((row) =>
+      (row[0] ?? "").trim()
+    );
+
+    if (normalizedPhone && phones.includes(normalizedPhone)) {
+      return NextResponse.json(
+        { error: "duplicate", reason: "phone" },
+        { status: 409 }
+      );
+    }
+    if (ip !== "unknown" && ips.includes(ip)) {
+      return NextResponse.json(
+        { error: "duplicate", reason: "ip" },
+        { status: 409 }
+      );
     }
 
     const timestamp = new Date().toISOString();
