@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLanguage } from "@/lib/i18n";
 
 export default function AudioPlayer() {
+  const { t } = useLanguage();
   const audioRef  = useRef<HTMLAudioElement>(null);
   const [playing,  setPlaying]  = useState(false);
   const [started,  setStarted]  = useState(false);
@@ -61,7 +63,7 @@ export default function AudioPlayer() {
               <circle cx="6" cy="18" r="3"/>
               <circle cx="18" cy="16" r="3"/>
             </svg>
-            Tap to play music
+            {t.audio.hint}
           </div>
         )}
 

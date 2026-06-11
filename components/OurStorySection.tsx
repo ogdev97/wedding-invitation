@@ -2,8 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import Snowfall from "./Snowfall";
+import { useLanguage } from "@/lib/i18n";
 
 export default function OurStorySection() {
+  const { t } = useLanguage();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,14 +53,14 @@ export default function OurStorySection() {
           className="reveal-section text-[10px] tracking-[0.4em] uppercase mb-4 font-inter"
           style={{ color: "#e090b0" }}
         >
-          Chapter One
+          {t.story.chapter}
         </p>
 
         <h2
           className="reveal-section font-playfair italic mb-6"
           style={{ fontSize: "clamp(2.2rem,9vw,3rem)", lineHeight: 1.2, color: "white" }}
         >
-          Our Story
+          {t.story.title}
         </h2>
 
         <div className="reveal-section flex items-center gap-3 max-w-[180px] mx-auto mb-8">
@@ -73,25 +75,19 @@ export default function OurStorySection() {
           className="reveal-section font-cormorant leading-relaxed mb-6"
           style={{ fontSize: "clamp(1.1rem,4.5vw,1.25rem)", color: "rgba(255,255,255,0.78)", fontStyle: "italic" }}
         >
-          &ldquo;Two souls, one path. What started as a chance encounter grew
-          into a love story written in the stars — and now, we invite you to
-          witness our forever.&rdquo;
+          &ldquo;{t.story.quote}&rdquo;
         </p>
 
         <p
           className="reveal-section font-cormorant"
           style={{ fontSize: "1rem", color: "rgba(255,255,255,0.4)" }}
         >
-          — Norman &amp; Joo Yi
+          {t.story.signature}
         </p>
 
         {/* Timeline */}
         <div className="reveal-section mt-12 space-y-6 text-left">
-          {[
-            { year: "Our Meeting",  desc: "Where it all began"   },
-            { year: "Our Journey",  desc: "Every moment counted" },
-            { year: "Our Forever",  desc: "15th May 2027"        },
-          ].map((item) => (
+          {t.story.timeline.map((item) => (
             <div key={item.year} className="flex items-start gap-4">
               <div className="flex flex-col items-center pt-1">
                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#c04878" }} />

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, type Easing } from "framer-motion";
 import CountdownTimer from "./CountdownTimer";
 import Snowfall from "./Snowfall";
+import { useLanguage } from "@/lib/i18n";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -265,6 +266,7 @@ const CARD_WIDTH = 320;
 const CARD_HEIGHT = 500;
 
 export default function HeroSection() {
+  const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [phase, setPhase] = useState<Phase>(0);
 
@@ -406,7 +408,7 @@ export default function HeroSection() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 1 }}
               >
-                An Invitation
+                {t.hero.invitation}
               </motion.p>
 
               <motion.div
@@ -434,7 +436,7 @@ export default function HeroSection() {
                     letterSpacing: "0.15em",
                   }}
                 >
-                  15 . 05 . 2027
+                  {t.hero.coupleDate}
                 </p>
               </motion.div>
 
@@ -460,7 +462,7 @@ export default function HeroSection() {
                       whileHover={{ scale: 1.05, background: "rgba(201,168,76,0.28)" }}
                       whileTap={{ scale: 0.97 }}
                     >
-                      Open Invitation
+                      {t.hero.openInvitation}
                     </motion.button>
                     <motion.div
                       animate={{ y: [0, 4, 0] }}
@@ -527,7 +529,7 @@ export default function HeroSection() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.7, delay: d(0) }}
                   >
-                    Together with their families
+                    {t.hero.togetherFamilies}
                   </motion.p>
 
                   <motion.p
@@ -541,7 +543,7 @@ export default function HeroSection() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.7, delay: d(1) }}
                   >
-                    The Wedding of
+                    {t.hero.weddingOf}
                   </motion.p>
 
                   <motion.h1
@@ -602,7 +604,7 @@ export default function HeroSection() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.7, delay: d(6) }}
                   >
-                    15<sup style={{ fontSize: "0.55em" }}>th</sup> May 2027
+                    {t.hero.fullDate}
                   </motion.p>
 
                   <motion.p
@@ -612,7 +614,7 @@ export default function HeroSection() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.7, delay: d(7) }}
                   >
-                    VTEC Batu Kawan
+                    {t.hero.venue}
                   </motion.p>
 
                   <div className="mt-1">
@@ -671,7 +673,7 @@ export default function HeroSection() {
                 className="text-center text-[10px] tracking-[0.3em] uppercase mb-4 font-inter"
                 style={{ color: "rgba(255,255,255,0.4)" }}
               >
-                Counting down to forever
+                {t.hero.countdown}
               </p>
               <CountdownTimer targetDate="2027-05-15T00:00:00" />
             </motion.div>
@@ -698,7 +700,7 @@ export default function HeroSection() {
                 className="text-[9px] tracking-[0.35em] uppercase font-inter"
                 style={{ color: "rgba(255,255,255,0.55)" }}
               >
-                Scroll
+                {t.hero.scroll}
               </span>
               <svg
                 viewBox="0 0 24 24"

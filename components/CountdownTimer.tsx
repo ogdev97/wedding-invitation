@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/lib/i18n";
 
 interface TimeLeft {
   days: number; hours: number; minutes: number; seconds: number;
@@ -56,6 +57,7 @@ function Unit({ value, label }: { value: string; label: string }) {
 }
 
 export default function CountdownTimer({ targetDate }: { targetDate: string }) {
+  const { t } = useLanguage();
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => getTimeLeft(targetDate));
 
   useEffect(() => {
@@ -69,13 +71,13 @@ export default function CountdownTimer({ targetDate }: { targetDate: string }) {
 
   return (
     <div className="flex items-end justify-center gap-3">
-      <Unit value={String(timeLeft.days)}       label="Days"    />
+      <Unit value={String(timeLeft.days)}       label={t.countdown.days}  />
       {sep}
-      <Unit value={pad(timeLeft.hours)}          label="Hours"   />
+      <Unit value={pad(timeLeft.hours)}          label={t.countdown.hours} />
       {sep}
-      <Unit value={pad(timeLeft.minutes)}        label="Mins"    />
+      <Unit value={pad(timeLeft.minutes)}        label={t.countdown.mins}  />
       {sep}
-      <Unit value={pad(timeLeft.seconds)}        label="Secs"    />
+      <Unit value={pad(timeLeft.seconds)}        label={t.countdown.secs}  />
     </div>
   );
 }

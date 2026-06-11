@@ -4,13 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, type PanInfo } from "framer-motion";
 import Image from "next/image";
 import Snowfall from "./Snowfall";
+import { useLanguage } from "@/lib/i18n";
 
+/* Image config — captions/subs are localised via t.gallery.photos (same order) */
 const PHOTOS = [
-  { src: "/images/gallery-DSC07120.jpg", caption: "Pure Joy",       sub: "Petals in the air",    objectPosition: "center" },
-  { src: "/images/gallery-DSC07105.jpg", caption: "Together",       sub: "Side by side",         objectPosition: "39% center" },
-  { src: "/images/gallery-DSC07091.jpg", caption: "The Rings",      sub: "Sealed with love",     objectPosition: "48% center" },
-  { src: "/images/gallery-DSC07078.jpg", caption: "Our Vows",       sub: "Words from the heart", objectPosition: "45% center" },
-  { src: "/images/gallery-DSC07038.jpg", caption: "Forever Starts", sub: "The ceremony",         objectPosition: "center" },
+  { src: "/images/gallery-DSC07120.jpg", objectPosition: "center" },
+  { src: "/images/gallery-DSC07105.jpg", objectPosition: "39% center" },
+  { src: "/images/gallery-DSC07091.jpg", objectPosition: "48% center" },
+  { src: "/images/gallery-DSC07078.jpg", objectPosition: "45% center" },
+  { src: "/images/gallery-DSC07038.jpg", objectPosition: "center" },
 ];
 
 const SPRING = { type: "spring" as const, stiffness: 320, damping: 38 };
@@ -18,6 +20,7 @@ const SWIPE_THRESHOLD = 45;
 const AUTO_INTERVAL  = 4500;
 
 export default function PhotoSection() {
+  const { t } = useLanguage();
   const [current, setCurrent]       = useState(0);
   const [dragging, setDragging]     = useState(false);
   const [cardW, setCardW]           = useState(300);
@@ -110,10 +113,10 @@ export default function PhotoSection() {
           style={{ opacity: sectionVisible ? 1 : 0, transform: sectionVisible ? "translateY(0)" : "translateY(28px)" }}
         >
           <p className="text-[10px] tracking-[0.4em] uppercase mb-3 font-inter" style={{ color: "#e090b0" }}>
-            Our Moments
+            {t.gallery.moments}
           </p>
           <h2 className="font-playfair italic" style={{ fontSize: "clamp(2.2rem,9vw,3rem)", lineHeight: 1.2, color: "white" }}>
-            Gallery
+            {t.gallery.title}
           </h2>
         </div>
 
@@ -159,7 +162,7 @@ export default function PhotoSection() {
                   >
                     <Image
                       src={photo.src}
-                      alt={photo.caption}
+                      alt={t.gallery.photos[i].caption}
                       fill
                       className="object-cover"
                       style={{ objectPosition: photo.objectPosition }}
@@ -180,13 +183,13 @@ export default function PhotoSection() {
                         className="font-playfair italic text-white"
                         style={{ fontSize: "1.25rem", lineHeight: 1.2 }}
                       >
-                        {photo.caption}
+                        {t.gallery.photos[i].caption}
                       </p>
                       <p
                         className="font-inter mt-0.5"
                         style={{ fontSize: "0.65rem", letterSpacing: "0.2em", color: "#f5c4d8", textTransform: "uppercase" }}
                       >
-                        {photo.sub}
+                        {t.gallery.photos[i].sub}
                       </p>
                     </div>
                   </div>
@@ -229,7 +232,7 @@ export default function PhotoSection() {
             <path d="M15 18l-6-6 6-6" />
           </svg>
           <span className="font-inter text-[9px] tracking-[0.25em] uppercase" style={{ color: "#e090b0" }}>
-            Swipe to explore
+            {t.gallery.swipe}
           </span>
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#e090b0" strokeWidth="1.5">
             <path d="M9 18l6-6-6-6" />

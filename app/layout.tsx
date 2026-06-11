@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Cormorant_Garamond, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { LanguageProvider } from "@/lib/i18n";
+import LanguageToggle from "@/components/LanguageToggle";
 import "./globals.css";
 
 const playfairDisplay = Playfair_Display({
@@ -35,7 +37,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/images/hero-bg.jpg",
+        url: "/images/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "Norman & Jooyi Wedding",
@@ -46,7 +48,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Norman & Jooyi Digital RSVP",
     description: "AJ❤️ Forever 15/5/2027",
-    images: ["/images/hero-bg.jpg"],
+    images: ["/images/og-image.jpg"],
   },
 };
 
@@ -61,7 +63,10 @@ export default function RootLayout({
       className={`${playfairDisplay.variable} ${cormorantGaramond.variable} ${interSans.variable}`}
     >
       <body>
-        {children}
+        <LanguageProvider>
+          <LanguageToggle />
+          {children}
+        </LanguageProvider>
         <Analytics />
       </body>
     </html>
