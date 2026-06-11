@@ -3,6 +3,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Snowfall from "./Snowfall";
+import { useLanguage } from "@/lib/i18n";
+
+/* Couple contact details */
+const GROOM = {
+  name: "Norman",
+  display: "+60 13-488 8747",
+  wa: "https://wa.me/60134888747",
+  email: "norman1997.an@gmail.com",
+};
+const BRIDE = {
+  name: "Ong Joo Yi",
+  display: "+60 11-1101 8088",
+  wa: "https://wa.me/601111018088",
+};
 
 type Status = "idle" | "loading" | "success" | "error" | "duplicate";
 
@@ -35,12 +49,26 @@ function InputWrapper({ children }: { children: React.ReactNode }) {
 }
 
 export default function RSVPSection() {
+  const { t } = useLanguage();
   const ref = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<FormData>(INITIAL);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const [submittedName, setSubmittedName] = useState("");
   const [submittedSide, setSubmittedSide] = useState<"bride" | "groom" | "">("");
+  const [showGuestInfo, setShowGuestInfo] = useState(false);
+  const infoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showGuestInfo) return;
+    function onDocClick(e: MouseEvent) {
+      if (infoRef.current && !infoRef.current.contains(e.target as Node)) {
+        setShowGuestInfo(false);
+      }
+    }
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, [showGuestInfo]);
 
   useEffect(() => {
     const el = ref.current;
@@ -66,7 +94,7 @@ export default function RSVPSection() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name || !form.phone || !form.side) {
-      setError("Please fill in name, phone, and select Bride's or Groom's side.");
+      setError(t.rsvp.form.errorFill);
       return;
     }
     setError("");
@@ -142,13 +170,13 @@ export default function RSVPSection() {
         {/* Header */}
         <div className="text-center mb-10">
           <p className="reveal-section text-[10px] tracking-[0.4em] uppercase mb-3 font-inter" style={{ color: "#e090b0" }}>
-            You&rsquo;re Invited
+            {t.rsvp.invited}
           </p>
           <h2 className="reveal-section font-playfair italic" style={{ fontSize: "clamp(2.2rem,9vw,3rem)", lineHeight: 1.2, color: "white" }}>
-            RSVP
+            {t.rsvp.title}
           </h2>
           <p className="reveal-section font-cormorant italic mt-3" style={{ fontSize: "1.05rem", color: "rgba(255,255,255,0.45)" }}>
-            Kindly respond by 1st April 2027
+            {t.rsvp.respondBy}
           </p>
         </div>
 
@@ -168,7 +196,7 @@ export default function RSVPSection() {
               <span style={{ fontSize: "2.4rem" }}>💌</span>
             </div>
             <h3 className="font-playfair italic mb-3" style={{ color: "#f5c4d8", fontSize: "1.6rem" }}>
-              You&rsquo;ve already RSVP&rsquo;d
+              {t.rsvp.duplicate.title}
             </h3>
             <p
               className="font-cormorant italic mx-auto"
@@ -179,25 +207,26 @@ export default function RSVPSection() {
                 lineHeight: 1.55,
               }}
             >
-              We&rsquo;ve already received a response from this device. If you need to
-              update or correct your details, please reach out to the groom directly.
+              {t.rsvp.duplicate.body}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
               <a
-                href="https://wa.me/60134888747?text=Hi%20Norman%2C%20I%20need%20to%20update%20my%20RSVP"
+                href={`${GROOM.wa}?text=Hi%2C%20I%20need%20to%20update%20my%20RSVP`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block px-6 py-3 font-inter text-[11px] tracking-[0.25em] uppercase transition-all duration-200"
                 style={{ background: "#c04878", color: "#fff" }}
               >
-                WhatsApp +60 13-488 8747
+                {t.rsvp.duplicate.whatsappGroom} · {GROOM.display}
               </a>
               <a
-                href="mailto:norman1997.an@gmail.com?subject=RSVP%20correction"
+                href={`${BRIDE.wa}?text=Hi%2C%20I%20need%20to%20update%20my%20RSVP`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-block px-6 py-3 font-inter text-[11px] tracking-[0.25em] uppercase transition-all duration-200"
                 style={{ border: "1px solid #c04878", color: "#f5c4d8" }}
               >
-                Email Groom
+                {t.rsvp.duplicate.whatsappBride} · {BRIDE.display}
               </a>
             </div>
           </motion.div>
@@ -278,7 +307,7 @@ export default function RSVPSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.55 }}
             >
-              RSVP Received
+              {t.rsvp.success.badge}
             </motion.p>
 
             <motion.h3
@@ -288,7 +317,9 @@ export default function RSVPSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.7 }}
             >
-              {firstName ? <>Thank you, {firstName}!</> : <>Thank you!</>}
+              {firstName
+                ? t.rsvp.success.thankYouNamed.replace("{name}", firstName)
+                : t.rsvp.success.thankYou}
             </motion.h3>
 
             <motion.p
@@ -303,10 +334,10 @@ export default function RSVPSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.9 }}
             >
-              Your response has been lovingly recorded.
-              {submittedSide === "bride" && " The bride’s family can’t wait to celebrate with you."}
-              {submittedSide === "groom" && " The groom’s family can’t wait to celebrate with you."}
-              {!submittedSide && " We can’t wait to celebrate with you."}
+              {t.rsvp.success.body}
+              {submittedSide === "bride" && t.rsvp.success.brideFamily}
+              {submittedSide === "groom" && t.rsvp.success.groomFamily}
+              {!submittedSide && t.rsvp.success.bothFamily}
             </motion.p>
 
             <motion.div
@@ -329,7 +360,8 @@ export default function RSVPSection() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 1.2 }}
             >
-              See you on <span style={{ color: "#f5c4d8", fontWeight: 500 }}>15 May 2027</span>
+              {t.rsvp.success.seeYou}{" "}
+              <span style={{ color: "#f5c4d8", fontWeight: 500 }}>{t.details.cards.date.value}</span>
             </motion.p>
 
             <motion.p
@@ -344,21 +376,26 @@ export default function RSVPSection() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 1.4 }}
             >
-              Need to update your details? Contact the groom at{" "}
+              {t.rsvp.success.updateNote}
+              <br />
+              <span style={{ color: "rgba(255,255,255,0.55)" }}>{t.rsvp.contact.groom}:</span>{" "}
               <a
-                href="https://wa.me/60134888747"
+                href={GROOM.wa}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: "rgba(224,144,176,0.85)", textDecoration: "underline" }}
               >
-                +60 13-488 8747
-              </a>{" "}
-              or{" "}
+                {GROOM.display}
+              </a>
+              {"  ·  "}
+              <span style={{ color: "rgba(255,255,255,0.55)" }}>{t.rsvp.contact.bride}:</span>{" "}
               <a
-                href="mailto:norman1997.an@gmail.com?subject=RSVP%20correction"
+                href={BRIDE.wa}
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{ color: "rgba(224,144,176,0.85)", textDecoration: "underline" }}
               >
-                norman1997.an@gmail.com
+                {BRIDE.display}
               </a>
             </motion.p>
           </motion.div>
@@ -367,12 +404,12 @@ export default function RSVPSection() {
             style={{ border: "1px solid rgba(224,144,176,0.18)", background: "rgba(45,10,24,0.60)", backdropFilter: "blur(10px)", padding: "2rem" }}>
 
             <InputWrapper>
-              <label style={labelStyle}>Full Name *</label>
+              <label style={labelStyle}>{t.rsvp.form.nameLabel}</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => set("name", e.target.value)}
-                placeholder="Your full name"
+                placeholder={t.rsvp.form.namePlaceholder}
                 style={inputStyle}
                 className="placeholder:text-white/20"
                 required
@@ -380,12 +417,12 @@ export default function RSVPSection() {
             </InputWrapper>
 
             <InputWrapper>
-              <label style={labelStyle}>Phone Number *</label>
+              <label style={labelStyle}>{t.rsvp.form.phoneLabel}</label>
               <input
                 type="tel"
                 value={form.phone}
                 onChange={(e) => set("phone", e.target.value)}
-                placeholder="e.g. +60 12-345 6789"
+                placeholder={t.rsvp.form.phonePlaceholder}
                 style={inputStyle}
                 className="placeholder:text-white/20"
                 required
@@ -393,11 +430,11 @@ export default function RSVPSection() {
             </InputWrapper>
 
             <div>
-              <label style={labelStyle}>Bride or Groom side? *</label>
+              <label style={labelStyle}>{t.rsvp.form.sideLabel}</label>
               <div className="grid grid-cols-2 gap-3 mt-3">
                 {([
-                  { id: "bride", emoji: "👰🏻‍♀️", label: "Bride's Side", accent: "#e090b0" },
-                  { id: "groom", emoji: "🤵🏻‍♂️", label: "Groom's Side", accent: "#9a6c4a" },
+                  { id: "bride", emoji: "👰🏻‍♀️", label: t.rsvp.form.brideSide, accent: "#e090b0" },
+                  { id: "groom", emoji: "🤵🏻‍♂️", label: t.rsvp.form.groomSide, accent: "#9a6c4a" },
                 ] as const).map((opt) => {
                   const selected = form.side === opt.id;
                   return (
@@ -430,20 +467,74 @@ export default function RSVPSection() {
             </div>
 
             <div>
-              <label style={labelStyle}>How many PAX</label>
+              <label style={labelStyle}>{t.rsvp.form.paxLabel}</label>
               <div className="grid grid-cols-2 gap-3 mt-3">
                 <InputWrapper>
-                  <label
-                    className="font-inter"
-                    style={{
-                      color: "rgba(255,255,255,0.45)",
-                      fontSize: "0.7rem",
-                      display: "block",
-                      marginBottom: "2px",
-                    }}
+                  <div
+                    ref={infoRef}
+                    className="relative flex items-center gap-1.5"
+                    style={{ marginBottom: "2px" }}
                   >
-                    Adults
-                  </label>
+                    <label
+                      className="font-inter"
+                      style={{
+                        color: "rgba(255,255,255,0.45)",
+                        fontSize: "0.7rem",
+                      }}
+                    >
+                      {t.rsvp.form.adults}
+                    </label>
+                    <button
+                      type="button"
+                      aria-label={t.rsvp.form.guestsInfo}
+                      onClick={() => setShowGuestInfo((v) => !v)}
+                      onMouseEnter={() => setShowGuestInfo(true)}
+                      onMouseLeave={() => setShowGuestInfo(false)}
+                      className="flex items-center justify-center font-inter"
+                      style={{
+                        width: "15px",
+                        height: "15px",
+                        borderRadius: "9999px",
+                        border: "1px solid rgba(224,144,176,0.55)",
+                        color: "rgba(224,144,176,0.95)",
+                        fontSize: "0.62rem",
+                        lineHeight: 1,
+                        cursor: "pointer",
+                        flexShrink: 0,
+                      }}
+                    >
+                      i
+                    </button>
+                    <AnimatePresence>
+                      {showGuestInfo && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 4 }}
+                          transition={{ duration: 0.18 }}
+                          className="absolute font-inter"
+                          style={{
+                            bottom: "calc(100% + 8px)",
+                            left: 0,
+                            zIndex: 30,
+                            width: "210px",
+                            maxWidth: "70vw",
+                            background: "rgba(45,10,24,0.97)",
+                            border: "1px solid rgba(224,144,176,0.35)",
+                            color: "rgba(255,255,255,0.82)",
+                            fontSize: "0.7rem",
+                            lineHeight: 1.45,
+                            padding: "8px 10px",
+                            borderRadius: "6px",
+                            boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
+                            pointerEvents: "none",
+                          }}
+                        >
+                          {t.rsvp.form.guestsInfo}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                   <select
                     value={form.adults}
                     onChange={(e) => set("adults", e.target.value)}
@@ -451,7 +542,7 @@ export default function RSVPSection() {
                   >
                     {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                       <option key={n} value={n} style={{ background: "#3D0F20" }}>
-                        {n} {n === 1 ? "adult" : "adults"}
+                        {n}
                       </option>
                     ))}
                   </select>
@@ -467,7 +558,7 @@ export default function RSVPSection() {
                       marginBottom: "2px",
                     }}
                   >
-                    Babies (need baby chair)
+                    {t.rsvp.form.babiesLabel}
                   </label>
                   <select
                     value={form.babies}
@@ -476,7 +567,7 @@ export default function RSVPSection() {
                   >
                     {Array.from({ length: 6 }, (_, i) => i).map((n) => (
                       <option key={n} value={n} style={{ background: "#3D0F20" }}>
-                        {n} {n === 1 ? "baby" : "babies"}
+                        {n} {n === 1 ? t.rsvp.form.babyUnit : t.rsvp.form.babiesUnit}
                       </option>
                     ))}
                   </select>
@@ -485,23 +576,23 @@ export default function RSVPSection() {
             </div>
 
             <InputWrapper>
-              <label style={labelStyle}>Dietary Requirements</label>
+              <label style={labelStyle}>{t.rsvp.form.dietaryLabel}</label>
               <input
                 type="text"
                 value={form.dietary}
                 onChange={(e) => set("dietary", e.target.value)}
-                placeholder="Vegetarian, halal, allergies…"
+                placeholder={t.rsvp.form.dietaryPlaceholder}
                 style={inputStyle}
                 className="placeholder:text-white/20"
               />
             </InputWrapper>
 
             <InputWrapper>
-              <label style={labelStyle}>Message to the Couple</label>
+              <label style={labelStyle}>{t.rsvp.form.messageLabel}</label>
               <textarea
                 value={form.message}
                 onChange={(e) => set("message", e.target.value)}
-                placeholder="Share your wishes…"
+                placeholder={t.rsvp.form.messagePlaceholder}
                 rows={3}
                 style={{ ...inputStyle, resize: "none", lineHeight: 1.6 }}
                 className="placeholder:text-white/20"
@@ -509,7 +600,7 @@ export default function RSVPSection() {
             </InputWrapper>
 
             {error && <p className="font-inter text-xs" style={{ color: "rgba(255,140,160,0.9)" }}>{error}</p>}
-            {status === "error" && <p className="font-inter text-xs" style={{ color: "rgba(255,140,160,0.9)" }}>Something went wrong. Please try again.</p>}
+            {status === "error" && <p className="font-inter text-xs" style={{ color: "rgba(255,140,160,0.9)" }}>{t.rsvp.form.errorGeneric}</p>}
 
             <button
               type="submit"
@@ -517,7 +608,7 @@ export default function RSVPSection() {
               className="w-full py-4 font-inter text-[11px] tracking-[0.3em] uppercase transition-all duration-300 disabled:opacity-50"
               style={{ background: status === "loading" ? "rgba(192,72,120,0.5)" : "#c04878", color: "#fff", fontWeight: 600 }}
             >
-              {status === "loading" ? "Sending…" : "Send RSVP"}
+              {status === "loading" ? t.rsvp.form.sending : t.rsvp.form.submit}
             </button>
           </form>
         )}
@@ -532,25 +623,44 @@ export default function RSVPSection() {
               lineHeight: 1.5,
             }}
           >
-            For any corrections, misinformation, or other queries, please contact the groom at
+            {t.rsvp.contact.intro}
           </p>
-          <div className="mt-2 flex flex-col gap-1 items-center">
-            <a
-              href="https://wa.me/60134888747"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-inter text-xs tracking-wider"
-              style={{ color: "rgba(224,144,176,0.85)" }}
-            >
-              +60 13-488 8747
-            </a>
-            <a
-              href="mailto:norman1997.an@gmail.com?subject=Wedding%20RSVP%20Query"
-              className="font-inter text-xs tracking-wider"
-              style={{ color: "rgba(224,144,176,0.85)" }}
-            >
-              norman1997.an@gmail.com
-            </a>
+          <div className="mt-3 flex flex-col gap-3 items-center">
+            <div className="flex flex-col gap-1 items-center">
+              <p className="font-inter text-[10px] tracking-[0.25em] uppercase" style={{ color: "rgba(255,255,255,0.45)" }}>
+                {t.rsvp.contact.groom} · {GROOM.name}
+              </p>
+              <a
+                href={GROOM.wa}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-inter text-xs tracking-wider"
+                style={{ color: "rgba(224,144,176,0.85)" }}
+              >
+                {GROOM.display}
+              </a>
+              <a
+                href="mailto:norman1997.an@gmail.com?subject=Wedding%20RSVP%20Query"
+                className="font-inter text-xs tracking-wider"
+                style={{ color: "rgba(224,144,176,0.85)" }}
+              >
+                {GROOM.email}
+              </a>
+            </div>
+            <div className="flex flex-col gap-1 items-center">
+              <p className="font-inter text-[10px] tracking-[0.25em] uppercase" style={{ color: "rgba(255,255,255,0.45)" }}>
+                {t.rsvp.contact.bride} · {BRIDE.name}
+              </p>
+              <a
+                href={BRIDE.wa}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-inter text-xs tracking-wider"
+                style={{ color: "rgba(224,144,176,0.85)" }}
+              >
+                {BRIDE.display}
+              </a>
+            </div>
           </div>
           <div className="mt-10">
             <p className="font-playfair italic text-lg" style={{ color: "rgba(255,255,255,0.22)" }}>Norman &amp; Joo Yi</p>
